@@ -10,6 +10,8 @@ namespace Hellgate.Editor
     public static class GrayboxValidation
     {
         const string ScenePath = "Assets/Scenes/Graybox.unity";
+        // Graybox geometry is on Default; exclude the Player layer from environment probes.
+        const int GeometryMask = 1 << 0;
 
         public static void RunBatch()
         {
@@ -28,7 +30,7 @@ namespace Hellgate.Editor
             for (float z = 1; z <= 51; z += 0.25f)
             {
                 RequireSurface(new Vector3(0, 0.5f, z), 0);
-                if (Physics.CheckCapsule(new Vector3(0, 0.35f, z), new Vector3(0, 1.55f, z), 0.3f))
+                if (Physics.CheckCapsule(new Vector3(0, 0.35f, z), new Vector3(0, 1.55f, z), 0.3f, GeometryMask))
                     throw new InvalidOperationException("Blocked main route at z=" + z);
             }
 
@@ -66,7 +68,7 @@ namespace Hellgate.Editor
 
         static void RequireSurface(Vector3 origin, float expectedHeight)
         {
-            if (!Physics.Raycast(origin, Vector3.down, out var hit, 6, ~0, QueryTriggerInteraction.Ignore)
+            if (!Physics.Raycast(origin, Vector3.down, out var hit, 6, GeometryMask, QueryTriggerInteraction.Ignore)
                 || Mathf.Abs(hit.point.y - expectedHeight) > 0.02f)
                 throw new InvalidOperationException("Floor height mismatch below " + origin);
         }
@@ -79,7 +81,7 @@ namespace Hellgate.Editor
 
         static void RequireWall(Vector3 origin, Vector3 direction, float distance)
         {
-            if (!Physics.Raycast(origin, direction, out var hit, distance + 0.1f, ~0, QueryTriggerInteraction.Ignore)
+            if (!Physics.Raycast(origin, direction, out var hit, distance + 0.1f, GeometryMask, QueryTriggerInteraction.Ignore)
                 || Mathf.Abs(hit.distance - distance) > 0.02f)
                 throw new InvalidOperationException("Wall mismatch from " + origin + " toward " + direction);
         }
